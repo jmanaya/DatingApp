@@ -443,3 +443,6 @@ $RECYCLE.BIN/
 
 # Production appsettings.json file with API keys, connection strings, etc.:
 appsettings.json
+
+# Excluding the SSL certificate folder:
+ssl
