@@ -13,13 +13,13 @@ export class MembersService {
   usersUrl = this.baseUrl + 'users/';
   members: Member[] = [];
 
-  constructor(private https: HttpClient) { }
+  constructor(private http: HttpClient) { }
 
   getMembers() {
     if (this.members.length > 0)
       return of(this.members);
     else
-      return this.https.get<Member[]>(this.usersUrl).pipe(
+      return this.http.get<Member[]>(this.usersUrl).pipe(
         map(members => {
           this.members = members;
           return members;
@@ -33,15 +33,23 @@ export class MembersService {
     if (member !== undefined)
       return of(member);
     else
-      return this.https.get<Member>(this.usersUrl + username);
+      return this.http.get<Member>(this.usersUrl + username);
   }
 
   updateMember(member: Member) {
-    return this.https.put(this.usersUrl, member).pipe(
+    return this.http.put(this.usersUrl, member).pipe(
       map( () => {
         const index = this.members.indexOf(member);
         this.members[index] = member;
       })
     );
+  }
+
+  setMainPhoto(photoId: number) {
+    return this.http.put(`${this.usersUrl}set-main-photo/${photoId}`, {});
+  }
+
+  deletePhoto(photoId: number) {
+    return this.http.delete(`${this.usersUrl}delete-photo/${photoId}`);
   }
 }
