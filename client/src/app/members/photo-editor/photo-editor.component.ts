@@ -1,11 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FileUploader } from 'ng2-file-upload';
 import { take } from 'rxjs/operators';
-import { Member } from 'src/app/models/Member';
-import { Photo } from 'src/app/models/Photo';
-import { User } from 'src/app/models/User';
-import { AccountService } from 'src/app/services/account.service';
-import { MembersService } from 'src/app/services/members.service';
+import { Member } from 'src/app/_models/Member';
+import { Photo } from 'src/app/_models/Photo';
+import { User } from 'src/app/_models/User';
+import { AccountService } from 'src/app/_services/account.service';
+import { MembersService } from 'src/app/_services/members.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -69,8 +69,13 @@ export class PhotoEditorComponent implements OnInit {
 
     this.uploader.onSuccessItem = (item, response, status, headers) => {
       if (response) {
-        const photo = JSON.parse(response);
+        const photo: Photo = JSON.parse(response);
         this.member.photos.push(photo);
+        if (photo.isMain) {
+          this.user.photoUrl = photo.url;
+          this.member.photoUrl = photo.url;
+          this.accountService.setCurrentUser(this.user);
+        }
       }
     }
   }

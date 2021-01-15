@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Member } from 'src/app/models/Member';
-import { MembersService } from 'src/app/services/members.service';
+import { Member } from 'src/app/_models/Member';
+import { MembersService } from 'src/app/_services/members.service';
 
 @Component({
   selector: 'app-member-list',

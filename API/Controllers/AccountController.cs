@@ -6,6 +6,7 @@ using API.Data;
 using API.DTOs;
 using API.Entities;
 using API.Interface;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,8 +16,10 @@ namespace API.Controllers
     {
         private readonly DataContext context;
         private readonly ITokenService tokenService;
-        public AccountController(DataContext context, ITokenService tokenService)
+        private readonly IMapper mapper;
+        public AccountController(DataContext context, ITokenService tokenService, IMapper mapper)
         {
+            this.mapper = mapper;
             this.tokenService = tokenService;
             this.context = context;
         }
@@ -27,23 +30,23 @@ namespace API.Controllers
             if (await UserExists(dto.Username))
                 return BadRequest("Username is already in use.");
 
+            var user = mapper.Map<User>(dto);
+
             using var hmac = new HMACSHA512();
 
-            var user = new User
-            {
-                UserName = dto.Username.ToLower(),
-                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dto.Password)),
-                PasswordSalt = hmac.Key
-            };
+            user.UserName = dto.Username.ToLower();
+            user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dto.Password));
+            user.PasswordSalt = hmac.Key;
 
             context.Users.Add(user);
 
             await context.SaveChangesAsync();
 
-            var userDto = new UserDto 
-            { 
-                Username = user.UserName, 
-                Token = tokenService.CreateToken(user) 
+            var userDto = new UserDto
+            {
+                Username = user.UserName,
+                Token = tokenService.CreateToken(user),
+                KnownAs = user.KnownAs
             };
 
             return userDto;
@@ -52,7 +55,7 @@ namespace API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login(UserLoginDto dto)
         {
-            var user =  await 
+            var user = await
                         context.Users
                         .Include(p => p.Photos)
                         .SingleOrDefaultAsync(u => u.UserName.ToLower() == dto.Username.ToLower());
@@ -66,9 +69,10 @@ namespace API.Controllers
             if (!CompareHash(hash, user.PasswordHash))
                 return Unauthorized("Invalid username and/or password.");
 
-            var userDto = new UserDto 
-            { 
-                Username = user.UserName, 
+            var userDto = new UserDto
+            {
+                Username = user.UserName,
+                KnownAs = user.KnownAs,
                 Token = tokenService.CreateToken(user),
                 PhotoUrl = user.Photos.FirstOrDefault(p => p.IsMain)?.Url
             };
